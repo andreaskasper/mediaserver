@@ -1,0 +1,10 @@
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_URI} !/index.php
+RewriteCond %{REQUEST_URI} !/skins/
+RewriteCond %{REQUEST_URI} !^/.well-known/
+RewriteCond %{REQUEST_URI} !^/google794219e769ff74de.html
+RewriteCond %{REQUEST_URI} !^/robots.txt
+RewriteCond %{REQUEST_URI} !^/favicon.ico
+RewriteCond %{REQUEST_URI} !^/webpushr-sw.js
+RewriteRule (.+) /index.php [L]

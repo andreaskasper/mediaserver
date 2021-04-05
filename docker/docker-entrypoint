@@ -1,0 +1,18 @@
+#!/bin/bash
+
+case "$1" in
+  bash)
+    exec $@
+    exit 0;;
+  demo)
+    echo -e "[*] download Big Buck Bunn yin demo bucket"
+    wget -O /originals/bucket/demo/bbb.mov https://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
+    exit 0;;
+  *)
+    nohup php /var/www/html/bot_converter.php &
+    exec docker-php-entrypoint $1 $2
+    exit 0;;
+esac
+
+
+

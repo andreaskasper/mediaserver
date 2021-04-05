@@ -1,0 +1,125 @@
+<?php
+
+  if (($_GET["act"] ?? "") == "uploadDD") {
+    if (!is_writable("/originals/")) { die(json_encode(array("err" => 1, "msg" => "Ordner Originals nicht beschreibbar."))); }
+    foreach ($_FILES as $file) {
+      if (file_exists("/originals/demo/".$file["name"])) continue;
+      //if (!is_writable("/var/www/originals/".$file["name"])) { die(json_encode(array("err" => 2, "msg" => "Datei in Originals nicht beschreibbar."))); }
+      copy($file["tmp_name"], "/originals/demo/".$file["name"]);
+      echo("done");
+    }
+      die(json_encode(array("err" => 0, "msg" => "Ok")));
+    exit;
+  }
+
+    PageEngine::html("header");
+?>
+  <main id="dropzone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fas fa-database"></i><?=$params["bucket"] ?> <?=$params["path"] ?>
+<?php
+if (!is_writable("/originals/".$params["bucket"].$params["path"])) echo('<i class="fas fa-lock ml-3" style="color: #d32f2f;"></i>');
+
+?>
+        
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group mr-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            This week
+          </button>
+        </div>
+      </div>
+
+      <table>
+      
+<?php
+  $path2 = "/originals/".$params["bucket"].$params["path"];
+  $files = scandir($path2);
+  foreach ($files as $file) {
+    if (substr($file,0,1) == ".") continue;
+    if (is_dir($path2.$file)) echo('<tr><td><i class="far fa-folder"></i> '.$file.'</td></tr>');
+    else echo('<tr><td>'.$file.'</td></tr>');
+
+  }
+
+
+  ?>
+      
+      </table>
+
+      <div class="progress">
+        <div id="uploadProgress2" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+
+  </main>
+<script>
+function dragOverHandler(ev) {
+  //console.log('File(s) in drop zone');
+
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
+}
+
+function dropHandler(ev) {
+  console.log('File(s) dropped');
+
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
+
+  if (ev.dataTransfer.items) {
+    // Use DataTransferItemList interface to access the file(s)
+    fd = new FormData()
+    for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+
+      $.each(ev.dataTransfer.files,function(i,v) {
+            fd.append("file",v,v.name)
+      });
+      // If dropped items aren't files, reject them
+      /*if (ev.dataTransfer.items[i].kind === 'file') {
+        var file = ev.dataTransfer.items[i].getAsFile();
+        console.log('... file[' + i + '].name = ' + file.name);
+      }*/
+      fd.append("url","drop")
+      upload(fd)
+    }
+  } else {
+    // Use DataTransfer interface to access the file(s)
+    for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+      console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+    }
+  }
+}
+
+function upload(fd){
+    return $.ajax({
+        xhr: function() {
+          var xhr = new window.XMLHttpRequest();
+          xhr.upload.addEventListener("progress", function(evt) {
+            if (evt.lengthComputable) {
+              var percentComplete = (evt.loaded / evt.total) * 100;
+              console.log("progress", percentComplete);
+              $("#uploadProgress2").css("width",percentComplete+"%").text(percentComplete.toFixed(1)+"%");
+              //Do something with upload progress here
+              }
+            }, false);
+          return xhr;
+        },
+        url:"?act=uploadDD",
+        type:"POST",
+        processData:false,
+        contentType: false,
+        data: fd,
+        success:function(){ console.log("Uploaded.",arguments); document.location.href=document.location.href; },
+        error:function(){ console.log("Error Uploading.",arguments) },
+    });
+}
+</script>
+<?php
+    PageEngine::html("footer");
+?>

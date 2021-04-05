@@ -1,2 +1,2 @@
 # mediaserver
-MediaServer
+Little Mediaserver to convert and serve video files
