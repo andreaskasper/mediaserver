@@ -57,43 +57,71 @@ while(true) {
         $md5 = $file->md5;
         echo("[MD5] ".$md5.PHP_EOL);
 
-        $local = new Datei("/converted/".$md5.".0.jpg");
-        if (!$local->exists) $file->ffmpegthumbnailmiddle($local);
-
-        $local = new Datei("/converted/".$md5.".1080p.mp4");
-        if (!$local->exists) { 
-            if ($file->height >= 1080) $file->convertffmpeg($local, ' -filter:v "scale=-2:1080" -c:v libx264 -c:a aac -movflags +faststart ');
-            elseif ($file->height > 480)  $file->convertffmpeg($local, " -c:v libx264 -c:a aac -movflags +faststart ");
+        if (($json["convert"]["default"]["jpg_thumbnail0"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".0.jpg");
+            if (!$local->exists) $file->ffmpegthumbnailmiddle($local);
         }
 
-        $local = new Datei("/converted/".$md5.".1080p.webm");
-        if (!$local->exists) { 
-            if ($file->height >= 1080) $file->convertffmpeg($local, ' -filter:v "scale=-2:1080" -vcodec libvpx-vp9 -acodec libvorbis ');
-            elseif ($file->height > 480)  $file->convertffmpeg($local, " -vcodec libvpx-vp9 -acodec libvorbis ");
+        if (($json["convert"]["default"]["mp4_1080p"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".1080p.mp4");
+            if (!$local->exists) { 
+                $atts = " -c:v libx264 -c:a aac -movflags +faststart ";
+                if ($file->height > 1080) $atts .= ' -filter:v "scale=-2:1080" ';
+                $file->convertffmpeg($local, $atts);
+            }
         }
 
-        $local = new Datei("/converted/".$md5.".480p.mp4");
-        if (!$local->exists) { 
-            if ($file->height >= 480) $file->convertffmpeg($local, ' -filter:v "scale=-2:480" -c:v libx264 -c:a aac -movflags +faststart ');
-            elseif ($file->height > 240)  $file->convertffmpeg($local, ' -c:v libx264 -c:a aac -movflags +faststart ');
+        if (($json["convert"]["default"]["webm_1080p"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".1080p.webm");
+            if (!$local->exists) { 
+                $atts = ' -vcodec libvpx-vp9 -acodec libvorbis ';
+                if ($file->height > 1080) $atts .= ' -filter:v "scale=-2:1080" ';
+                $file->convertffmpeg($local, $atts);
+            }
         }
 
-        $local = new Datei("/converted/".$md5.".480p.webm");
-        if (!$local->exists) { 
-            if ($file->height >= 480) $file->convertffmpeg($local, ' -filter:v "scale=-2:480" -vcodec libvpx-vp9 -acodec libvorbis ');
-            elseif ($file->height > 240)  $file->convertffmpeg($local, " -vcodec libvpx-vp9 -acodec libvorbis ");
+        if (($json["convert"]["default"]["mp4_480p"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".480p.mp4");
+            if (!$local->exists) { 
+                $atts = " -c:v libx264 -c:a aac -movflags +faststart ";
+                if ($file->video_fps > 30) $atts .= " -r 30 ";
+                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
+                if ($file->height > 480) $atts .= ' -filter:v "scale=-2:480" ';
+                $file->convertffmpeg($local, $atts);
+            }
         }
 
-        $local = new Datei("/converted/".$md5.".240p.mp4");
-        if (!$local->exists) { 
-            if ($file->height >= 240) $file->convertffmpeg($local, ' -filter:v "scale=-2:240" -c:v libx264 -c:a aac -movflags +faststart ');
-            else $file->convertffmpeg($local, " -c:v libx264 -c:a aac -movflags +faststart ");
+        if (($json["convert"]["default"]["webm_480p"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".480p.webm");
+            if (!$local->exists) {
+                $atts = ' -vcodec libvpx-vp9 -acodec libvorbis ';
+                if ($file->video_fps > 30) $atts .= " -r 30 ";
+                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
+                if ($file->height > 480) $atts .= ' -filter:v "scale=-2:480" ';
+                $file->convertffmpeg($local, $atts);
+            }
         }
 
-        $local = new Datei("/converted/".$md5.".240p.webm");
-        if (!$local->exists) { 
-            if ($file->height >= 240) $file->convertffmpeg($local, ' -filter:v "scale=-2:240" -vcodec libvpx-vp9 -acodec libvorbis ');
-            else $file->convertffmpeg($local, " -vcodec libvpx-vp9 -acodec libvorbis ");
+        if (($json["convert"]["default"]["mp4_240p"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".240p.mp4");
+            if (!$local->exists) { 
+                $atts = " -c:v libx264 -c:a aac -movflags +faststart ";
+                if ($file->video_fps > 30) $atts .= " -r 30 ";
+                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
+                if ($file->height > 240) $atts .= ' -filter:v "scale=-2:240" ';
+                $file->convertffmpeg($local, $atts);
+            }
+        }
+
+        if (($json["convert"]["default"]["webm_240p"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".240p.webm");
+            if (!$local->exists) { 
+                $atts = ' -vcodec libvpx-vp9 -acodec libvorbis ';
+                if ($file->video_fps > 30) $atts .= " -r 30 ";
+                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
+                if ($file->height > 240) $atts .= ' -filter:v "scale=-2:240" ';
+                $file->convertffmpeg($local, $atts);
+            }
         }
         
     }

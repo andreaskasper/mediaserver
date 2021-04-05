@@ -1,4 +1,12 @@
 <?php
+  if (($_POST["act"] ?? "") == "createbucket") {
+    if (!preg_match("@^[a-zA-Z0-9]+$@", trim($_POST["new_bucket_name"]))) die("ungültiger Name");
+    if (file_exists("/originals/".trim($_POST["new_bucket_name"]))) die("Ding existiert bereits");
+    mkdir("/originals/".trim($_POST["new_bucket_name"]),0777);
+    header("Location: ?");
+  }
+
+
     PageEngine::html("header");
 ?>
   <main id="dropzone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
@@ -22,20 +30,29 @@
 
   $dir = "/originals/";
 
-  mkdir("/originals/demo/", 0777, true);
+  //mkdir("/originals/demo/", 0777, true);
 
   if (!file_exists($dir)) die("Ordner gibt es nicht");
   if (!is_writable($dir)) die("Ordner nicht beschreibbar");
 
 
   $files = scandir($dir);
-  print_r($files);
   foreach ($files as $file) {
     if (substr($file,0,1) == ".") continue;
     if (!is_dir($dir.$file)) { echo($file); continue; }
-    echo('<tr><td><a href="/'.$_ENV["lang"].'/admin/bucket/'.$file.'/"><i class="far fa-folder"></i> '.$file.'</a></td></tr>');
+    echo('<tr><td><i class="far fa-folder"></i></td><td><a href="/'.$_ENV["lang"].'/admin/bucket/'.$file.'/">'.$file.'</a></td><td><button class="btn btn-link"><i class="fas fa-ellipsis-v"></i></button></td></tr>');
   }
 ?>
+  <tr><td><i class="far fa-plus-circle"></i></td><td>
+  <form method="POST">
+  <INPUT type="hidden" name="act" value="createbucket"/>
+  <div class="input-group">
+  <input type="text" class="form-control" name="new_bucket_name" placeholder="Bucket" aria-label="Bucket name" aria-describedby="basic-addon2"/>
+  <div class="input-group-append">
+    <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-folder-plus"></i> Create</button>
+  </div>
+</div></form>
+
 </table>
   </main>
 <?php

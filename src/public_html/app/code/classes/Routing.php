@@ -86,7 +86,44 @@ class Routing {
     }
 
     public static function start_bucket(string $path) {
-        echo($path);
+        preg_match("@^/(?P<bucket>[A-Za-z0-9]+)(?P<path>/.*)$@", $path, $m);
+        if (($_GET["download"] ?? "") == "original") {
+            $datei = new Datei("/originals".$path);
+            if (!$datei->exists) die("404");
+            header('Content-Disposition: inline; filename="'.$datei->basename.'"');
+            header('Content-Type: '.$datei->mimetype);
+            header("X-Sendfile: ".$datei->fullpath);
+            exit;
+        }
+
+        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)/(?P<md5>[a-z0-9]{32}).0(\.(?P<ci>c|i|z)(?P<width>[0-9]+)x(?P<height>[0-9]+))?\.(?P<format>bmp|jpg|jpeg|png|gif|webp)$@", $path, $m2)) {
+            $datei = new Datei("/converted/".$m2["md5"].".0.jpg");
+            if (!$datei->exists) die("404");
+            ImageRenderer::renderDatei($datei, $m2["ci"], $m2["width"], $m2["height"], $m2["format"]);
+            exit(1);
+        }
+
+
+        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)(?P<path>/.*).0\.(?P<ci>c|i)(?P<width>[0-9]+)x(?P<height>[0-9]+)\.(?P<format>jpg|png|gif|webp)$@", $path, $m2)) {
+            $datei = new Datei("/originals/".$m2["bucket"].$m2["path"].".0.jpg");
+            //$im = CreateFromJpeg("/converted/")
+            print_r($m2); exit(1);
+        }
+
+        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)(?P<path>/.*).0\.(?P<format>jpg|png|gif|webp)$@", $path, $m2)) {
+            print_r($m2); exit(1);
+        }
+
+        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)/(?P<md5>[a-z0-9]{32})\.embed\.html$@", $path, $m2)) {
+            echo('test');
+            exit(1);
+        }
+    }
+
+
+
+    private static function stringendswith($haystack, $needle) : bool {
+        return (substr($haystack, 0-strlen($needle) ,999) == $needle);
     }
     
 }

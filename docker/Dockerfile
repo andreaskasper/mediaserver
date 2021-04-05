@@ -14,7 +14,13 @@ RUN apt-get update \
     && chgrp -R www-data /inbox \
     && chgrp -R www-data /originals \
     && apt-get install -y ffmpeg libapache2-mod-xsendfile sqlite3 wget \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libpng-dev \
+        libwebp-dev \
     && a2enmod xsendfile rewrite \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) gd \
     && docker-php-ext-install pdo pdo_mysql \
     && apt-get clean
 

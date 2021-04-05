@@ -14,7 +14,7 @@
 
     PageEngine::html("header");
 ?>
-  <main id="dropzone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+  <main id="dropzone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"ondrop="dropHandler(event);" ondragover="dragOverHandler(event);" style="min-height: 100vh">
 
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="fas fa-database"></i><?=$params["bucket"] ?> <?=$params["path"] ?>
@@ -36,16 +36,37 @@ if (!is_writable("/originals/".$params["bucket"].$params["path"])) echo('<i clas
         </div>
       </div>
 
-      <table>
+      <table class="table table-striped">
       
 <?php
   $path2 = "/originals/".$params["bucket"].$params["path"];
   $files = scandir($path2);
   foreach ($files as $file) {
     if (substr($file,0,1) == ".") continue;
-    if (is_dir($path2.$file)) echo('<tr><td><i class="far fa-folder"></i> '.$file.'</td></tr>');
-    else echo('<tr><td>'.$file.'</td></tr>');
-
+    if (is_dir($path2.$file)) echo('<tr><td><i class="far fa-folder"></i></td><td><i class="far fa-folder"></i> '.$file.'</td></tr>');
+  }
+  foreach ($files as $file) {
+    if (substr($file,0,1) == ".") continue;
+    if (is_dir($path2.$file)) continue;
+    $datei = new Datei($path2.$file);
+    echo('<tr><td>');
+    switch ($datei->extension) {
+      case "jpg":
+      case "png":
+        echo('<i class="far fa-image"></i>'); break;
+      case "mp4":
+      case "webm":
+        echo('<i class="far fa-film"></i>'); break;
+      default: echo($datei->extension); break;
+    }
+    if ($datei->is_video) {
+      echo('</td><td><a href="/bucket/'.$params["bucket"].$params["path"].$datei->basename.'?download=original" TARGET="_blank">'.$file.'</a></td>');
+      echo('<td><a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.0.c1920x1080.jpg" TARGET="_blank">img</a></td>');
+    } else {
+      echo('</td><td><a href="/bucket/'.$params["bucket"].$params["path"].$datei->basename.'?download=original" TARGET="_blank">'.$file.'</a></td>');
+      echo('<td>---</td>');
+    }
+    echo('</tr>');
   }
 
 

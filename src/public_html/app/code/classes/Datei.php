@@ -12,6 +12,11 @@ class Datei {
 
     public function __get($name) {
         switch ($name) {
+            case "prebasename":
+                return substr($this->basename, 0, strlen($this->basename)-1-strlen($this->extension));
+            case "basename":
+                $path_parts = pathinfo($this->_file);
+                return $path_parts["basename"];
             case "exist":
             case "exists": 
                 return file_exists($this->_file);
@@ -26,11 +31,21 @@ class Datei {
             case "md5": 
                 if (is_null($this->_md5)) $this->_md5 = md5_file($this->_file);
                 return $this->_md5;
+            case "mimetype":
+                return mime_content_type($this->fullpath);
             case "is_video":
                 return ($this->video_duration > 1);
             case "video_duration":
                 $ffprobe = $this->ffprobe;
                 return ($ffprobe["format"]["duration"] ?? 0);
+            case "video_fps":
+                $ffprobe = $this->ffprobe;
+                foreach ($ffprobe["streams"] as $s) {
+                    if (preg_match("@^(?P<fps>[0-9]+)/1$@", $s["r_frame_rate"], $m)) return $m["fps"];
+                }
+                print_r($ffprobe);
+                throw new Exception("Unbekannter fps");
+                return null;
             case "width":
                 $ffprobe = $this->ffprobe;
                 foreach ($ffprobe["streams"] as $s) if (!empty($s["width"])) return $s["width"];
@@ -58,7 +73,6 @@ class Datei {
         $d = $this->video_duration/2;
         return $this->convertffmpeg($output, " -f mjpeg -vframes 1 -ss ".($d/2)." ");
     }
-
 
 
 
