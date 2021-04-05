@@ -61,9 +61,14 @@ if (!is_writable("/originals/".$params["bucket"].$params["path"])) echo('<i clas
     }
     if ($datei->is_video) {
       echo('</td><td><a href="/bucket/'.$params["bucket"].$params["path"].$datei->basename.'?download=original" TARGET="_blank">'.$file.'</a></td>');
-      echo('<td><a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.0.c1920x1080.jpg" TARGET="_blank">img</a></td>');
+      echo('<td>'.$datei->md5.'</td>');
+      echo('<td>');
+      echo('<a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.0.z1920x1080.jpg" TARGET="_blank">img</a>');
+      echo('<a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.embed.html" TARGET="_blank">embed</a>');
+      echo('</td>');
     } else {
       echo('</td><td><a href="/bucket/'.$params["bucket"].$params["path"].$datei->basename.'?download=original" TARGET="_blank">'.$file.'</a></td>');
+      echo('<td>'.$datei->md5.'</td>');
       echo('<td>---</td>');
     }
     echo('</tr>');

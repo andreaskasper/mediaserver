@@ -24,9 +24,11 @@ RUN apt-get update \
     && docker-php-ext-install pdo pdo_mysql \
     && apt-get clean
 
-ADD 000-default.conf /etc/apache2/sites-enabled/000-default.conf
-ADD docker-entrypoint /usr/local/bin/
-ADD uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+ADD docker/000-default.conf /etc/apache2/sites-enabled/000-default.conf
+ADD docker/docker-entrypoint /usr/local/bin/
+ADD docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+ADD docker/initd_phpconverter /etc/init.d/phpconverter
+ADD src /var/www/html
 
 #VOLUME /inbox
 #VOLUME /converted
@@ -36,6 +38,7 @@ ADD uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 ENV DOCUMENT_ROOT=/var/www/html/public_html/
 
 ENTRYPOINT ["docker-entrypoint"]
+CMD ["apache2-foreground"]
 
 WORKDIR /var/www/html
 

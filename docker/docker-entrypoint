@@ -9,7 +9,9 @@ case "$1" in
     wget -O /originals/bucket/demo/bbb.mov https://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
     exit 0;;
   *)
-    nohup php /var/www/html/bot_converter.php &
+    echo "starte php converter direkt"
+    php /var/www/html/bot_converter.php > /dev/null 2>&1 &
+    echo "starte docker-php-entrypoint mit $1 und $2"
     exec docker-php-entrypoint $1 $2
     exit 0;;
 esac

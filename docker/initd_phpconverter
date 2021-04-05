@@ -1,0 +1,29 @@
+#!/bin/bash
+
+case "$1" in 
+start)
+   cd /var/www/html
+   php bot_converter.php > /dev/null 2>&1 &
+   echo $!>/var/run/phpconverter.pid
+   ;;
+stop)
+   kill `cat /var/run/phpconverter.pid`
+   rm /var/run/phpconverter.pid
+   ;;
+restart)
+   $0 stop
+   $0 start
+   ;;
+status)
+   if [ -e /var/run/phpconverter.pid ]; then
+      echo phpconverter is running, pid=`cat /var/run/phpconverter.pid`
+   else
+      echo phpconverter is NOT running
+      exit 1
+   fi
+   ;;
+*)
+   echo "Usage: $0 {start|stop|status|restart}"
+esac
+
+exit 0

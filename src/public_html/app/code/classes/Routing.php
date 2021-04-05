@@ -110,12 +110,58 @@ class Routing {
             print_r($m2); exit(1);
         }
 
-        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)(?P<path>/.*).0\.(?P<format>jpg|png|gif|webp)$@", $path, $m2)) {
-            print_r($m2); exit(1);
+        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)/(?P<md5>[a-z0-9]{32})\.embed\.html$@", $path, $m)) {
+            echo('<html>
+            <head>
+            <link href="https://vjs.zencdn.net/7.11.4/video-js.css" rel="stylesheet" />
+            <!-- <script src="https://vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js"></script> -->
+          </head>
+          <style>
+          body { background: #000; width: 100%; height: 0; padding: 0; margin: 0; }
+          video { display: block; width: 100%; height: 100%; }
+          </style>
+          
+          <body>
+            <video
+              id="my-video"
+              class="video-js"
+              controls
+              allowfullscreen
+              '.((($_GET["autoplay"] ?? "0") == "1")?'autoplay':'').'
+              preload="auto"
+              poster="/bucket/'.$m["bucket"].'/'.$m["md5"].'.0.c1920x1080.jpg"
+              data-setup=\'{"fluid": true, "autoplay": true}\'
+              allow="autoplay; fullscreen"
+            >');
+            
+if ((new Datei("/converted/".$m["md5"].".1080p.mp4"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.1080.mp4" type="video/mp4" />'.PHP_EOL);
+if ((new Datei("/converted/".$m["md5"].".480.mp4"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.480p.mp4" type="video/mp4" />'.PHP_EOL);
+if ((new Datei("/converted/".$m["md5"].".240p.mp4"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.240p.mp4" type="video/mp4" />'.PHP_EOL);
+
+if ((new Datei("/converted/".$m["md5"].".1080p.webm"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.1080p.webm" type="video/webm" />'.PHP_EOL);
+if ((new Datei("/converted/".$m["md5"].".480p.webm"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.480p.webm" type="video/webm" />'.PHP_EOL);
+if ((new Datei("/converted/".$m["md5"].".240p.webm"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.240p.webm" type="video/webm" />'.PHP_EOL);
+
+              echo('<p class="vjs-no-js">
+                To view this video please enable JavaScript, and consider upgrading to a
+                web browser that
+                <a href="https://videojs.com/html5-video-support/" target="_blank"
+                  >supports HTML5 video</a
+                >
+              </p>
+            </video>
+          
+            <script src="https://vjs.zencdn.net/7.11.4/video.min.js"></script>
+          </body></html>');
+            exit(1);
         }
 
-        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)/(?P<md5>[a-z0-9]{32})\.embed\.html$@", $path, $m2)) {
-            echo('test');
+        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)/(?P<md5>[a-z0-9]{32})\.(?P<format>.+)$@", $path, $m2)) {
+            $datei = new Datei("/converted/".$m2["md5"].".".$m2["format"]);
+            if (!$datei->exists) die("404");
+            header('Content-Disposition: inline');
+            header('Content-Type: '.$datei->mimetype);
+            header("X-Sendfile: ".$datei->fullpath);
             exit(1);
         }
     }
