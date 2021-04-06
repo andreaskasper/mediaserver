@@ -12,6 +12,8 @@
     exit;
   }
 
+  $jsonfiles = @json_decode(@file_get_contents("/config/files.json"), true);
+
     PageEngine::html("header");
 ?>
   <main id="dropzone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"ondrop="dropHandler(event);" ondragover="dragOverHandler(event);" style="min-height: 100vh">
@@ -77,10 +79,53 @@ else {
     }
     if ($datei->is_video) {
       echo('</td><td><a href="/bucket/'.$params["bucket"].$params["path"].$datei->basename.'?download=original" TARGET="_blank">'.$file.'</a></td>');
-      echo('<td>'.$datei->md5.'</td>');
+      echo('<td>'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'</td>');
       echo('<td>');
-      echo('<a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.0.z1920x1080.jpg" TARGET="_blank">img</a>');
-      echo('<a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.embed.html" TARGET="_blank">embed</a>');
+
+      $convertings = $jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["conv"] ?? array();
+
+      if (count($convertings) > 0) {
+        echo('<div class="">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="far fa-eye"></i>
+        </button>
+        <div class="dropdown-menu dropdown-menu-right">');
+        foreach (($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["conv"] ?? array()) as $a) {
+          switch ($a) {
+            case "d.thumbmiddle":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.0.z1920x1080.jpg" class="dropdown-item" TARGET="_blank"><i class="far fa-image"></i> Thumbnail</a>');
+              break;
+            case "d.thumb25p":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.1.z1920x1080.jpg" class="dropdown-item" TARGET="_blank"><i class="far fa-image"></i> Preview-Thumbnail</a>');
+              break;
+            case "d.mp41080p":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.1080p.mp4" class="dropdown-item" TARGET="_blank"><i class="far fa-film"></i> mp4 (1080p, h264, aac)</a>');
+              break;
+            case "d.webm1080p":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.1080p.webm" class="dropdown-item" TARGET="_blank"><i class="far fa-film"></i> webm (1080p, vp9, Vobis)</a>');
+              break;
+            case "d.mp4480p":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.480p.mp4" class="dropdown-item" TARGET="_blank"><i class="far fa-film"></i> mp4 (480p, h264, aac)</a>');
+              break;
+            case "d.webm480p":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.480p.webm" class="dropdown-item" TARGET="_blank"><i class="far fa-film"></i> webm (480p, vp9, Vobis)</a>');
+              break;
+            case "d.mp4240p":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.240p.mp4" class="dropdown-item" TARGET="_blank"><i class="far fa-film"></i> mp4 (240p, h264, aac)</a>');
+              break;
+            case "d.webm240p":
+              echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.240p.webm" class="dropdown-item" TARGET="_blank"><i class="far fa-film"></i> webm (240p, vp9, Vobis)</a>');
+              break;
+            default: 
+              echo($a);
+          }
+        }
+        echo('<a href="/bucket/'.$params["bucket"].'/'.($jsonfiles["bucket"][$params["bucket"]][$datei->bucketprekey]["md5"] ?? "").'.embed.html" class="dropdown-item" TARGET="_blank"><i class="far fa-code"></i> HTML-Video for IFRAME</a>');
+        echo('</div>
+      </div>');
+    }
+      //echo('<a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.0.z1920x1080.jpg" TARGET="_blank">img</a>');
+      //echo('<a href="/bucket/'.$params["bucket"].'/'.$datei->md5.'.embed.html" TARGET="_blank">embed</a>');
       echo('</td>');
     } else {
       echo('</td><td><a href="/bucket/'.$params["bucket"].$params["path"].$datei->basename.'?download=original" TARGET="_blank">'.$file.'</a></td>');
@@ -94,6 +139,10 @@ else {
   ?>
       
       </table>
+
+      <?php
+print_r($jsonfiles);
+      ?>
 
       <div class="progress">
         <div id="uploadProgress2" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
@@ -139,6 +188,9 @@ function dropHandler(ev) {
 }
 
 function upload(fd){
+  $(window).bind('beforeunload', function(){
+    return "You're currently uploading. Do you want to exit this page?";
+  });
     return $.ajax({
         xhr: function() {
           var xhr = new window.XMLHttpRequest();

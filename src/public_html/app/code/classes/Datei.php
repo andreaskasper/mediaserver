@@ -17,6 +17,12 @@ class Datei {
             case "basename":
                 $path_parts = pathinfo($this->_file);
                 return $path_parts["basename"];
+            case "bucket":
+                if (preg_match("@^/originals/(?P<bucket>[^/]+)/@", $this->fullpath, $m)) return $m["bucket"];
+                return null;
+            case "bucketprekey":
+                if (preg_match("@^/originals/(?P<bucket>[^/]+)/(?P<prekey>.+)(\.[a-zA-Z0-9]+)$@", $this->fullpath, $m)) return $m["prekey"];
+                return null;
             case "exist":
             case "exists": 
                 return file_exists($this->_file);

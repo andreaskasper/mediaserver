@@ -58,9 +58,9 @@ while(true) {
         if (!$file->is_video) { echo("[NOTICE] kein Video".PHP_EOL); continue; }
         $md5 = $file->md5;
         echo("[MD5] ".$md5.PHP_EOL);
-        preg_match ("@^/originals/(?P<bucket>[^/]+)/(?P<path>.*)$@", $file->fullpath,$m);
+        preg_match ("@^/originals/(?P<bucket>[^/]+)/(?P<path2>.*)\.[a-zA-Z0-9]+$@", $file->fullpath, $m);
         $bucket = $m["bucket"];
-        $restpath = $m["path"];
+        $restpath = $m["path2"];
         $filesjson["bucket"][$bucket][$restpath]["md5"] = $md5;
         $filesjson["bucket"][$bucket][$restpath]["conv"] = array();
         //$filesjson 
@@ -70,6 +70,28 @@ while(true) {
             if (!$local->exists) $file->ffmpegthumbnailmiddle($local);
             $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.thumbmiddle";
         }
+
+        if (($json["convert"]["default"]["jpg_thumbnail1"] ?? "") == 1) {
+            $local = new Datei("/converted/".$md5.".1.jpg");
+            if (!$local->exists) {
+                $duration = $file->video_duration;
+                $folder = "/tmp/".md5(microtime(true))."/";
+                mkdir($folder, 0777);
+                passthru('nice -n 19 ffmpeg -i "'.$file->fullpath.'" -vf fps=1/'.($duration/25).' '.$folder.'%d.png');        
+                $im = ImageCreateTrueColor(1920, 1080);
+                for ($i = 1; $i <= 25; $i++) {
+                    $im2 = ImageCreateFromPng($folder.$i.".png");
+                    ImageCopyResized($im, $im2, ((($i-1) % 5)*1920/5), floor(($i-1)/5)*(1080/5), 0, 0, 1920/5, 1080/5, ImagesX($im2), ImagesY($im2));
+                    ImageDestroy($im2);
+                }
+                ImageJpeg($im, $local->fullpath, 100);
+                ImageDestroy($im);
+                exec('rm -f "'.$folder.'"');
+            }
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.thumb25p";
+        }
+
+        
 
         if (($json["convert"]["default"]["mp4_1080p"] ?? "") == 1) {
             $local = new Datei("/converted/".$md5.".1080p.mp4");

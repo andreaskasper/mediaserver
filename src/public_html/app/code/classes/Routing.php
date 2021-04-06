@@ -105,8 +105,8 @@ class Routing {
             exit;
         }
 
-        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)/(?P<md5>[a-z0-9]{32}).0(\.(?P<ci>c|i|z)(?P<width>[0-9]+)x(?P<height>[0-9]+))?\.(?P<format>bmp|jpg|jpeg|png|gif|webp)$@", $path, $m2)) {
-            $datei = new Datei("/converted/".$m2["md5"].".0.jpg");
+        if (preg_match("@^/(?P<bucket>[A-Za-z0-9]+)/(?P<md5>[a-z0-9]{32}).(?P<pic>[0-1])(\.(?P<ci>c|i|z)(?P<width>[0-9]+)x(?P<height>[0-9]+))?\.(?P<format>bmp|jpg|jpeg|png|gif|webp)$@", $path, $m2)) {
+            $datei = new Datei("/converted/".$m2["md5"].".".$m2["pic"].".jpg");
             if (!$datei->exists) die("404");
             ImageRenderer::renderDatei($datei, $m2["ci"], $m2["width"], $m2["height"], $m2["format"]);
             exit(1);
@@ -143,7 +143,7 @@ class Routing {
               allow="autoplay; fullscreen"
             >');
             
-if ((new Datei("/converted/".$m["md5"].".1080p.mp4"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.1080.mp4" type="video/mp4" />'.PHP_EOL);
+if ((new Datei("/converted/".$m["md5"].".1080p.mp4"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.1080p.mp4" type="video/mp4" />'.PHP_EOL);
 if ((new Datei("/converted/".$m["md5"].".480.mp4"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.480p.mp4" type="video/mp4" />'.PHP_EOL);
 if ((new Datei("/converted/".$m["md5"].".240p.mp4"))->exists) echo('<source src="/bucket/'.$m["bucket"].'/'.$m["md5"].'.240p.mp4" type="video/mp4" />'.PHP_EOL);
 

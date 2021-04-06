@@ -2,6 +2,7 @@
 
     $default_converters = array(
       "jpg_thumbnail0" => "Thumbnail (middle)",
+      "jpg_thumbnail1" => "Thumbnail (25 Previews)",
       "mp4_1080p" => "1080p mp4 (h264/aac)",
       "mp4_480p" => "480p mp4 (h264/aac)",
       "mp4_240p" => "240p mp4 (h264/aac)",
