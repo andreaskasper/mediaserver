@@ -40,6 +40,22 @@ if (!is_writable("/originals/".$params["bucket"].$params["path"])) echo('<i clas
       
 <?php
   $path2 = "/originals/".$params["bucket"].$params["path"];
+
+  if (!file_exists($path2)) echo('<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  Diesen Ordner gibt es leider nicht!
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>');
+  elseif (!is_writable($path2)) echo('<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  Der Ordner ist nicht beschreibbar!
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>');
+else {
+
+
   $files = scandir($path2);
   foreach ($files as $file) {
     if (substr($file,0,1) == ".") continue;
@@ -74,7 +90,7 @@ if (!is_writable("/originals/".$params["bucket"].$params["path"])) echo('<i clas
     echo('</tr>');
   }
 
-
+}
   ?>
       
       </table>

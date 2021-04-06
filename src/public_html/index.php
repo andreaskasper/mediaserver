@@ -69,7 +69,7 @@ spl_autoload_register(function($class_name) {
 
 date_default_timezone_set("Europe/Berlin");
 
-file_put_contents(__DIR__."/requests.log", var_export($_SERVER,true).PHP_EOL, FILE_APPEND);
+//file_put_contents(__DIR__."/requests.log", var_export($_SERVER,true).PHP_EOL, FILE_APPEND);
 
 //print_r($_ENV);
 

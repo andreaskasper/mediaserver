@@ -57,6 +57,15 @@ class Routing {
     }
 
     public static function start_admin(string $path) {
+        session_start();
+        if (!MyUser::isloggedin()) {
+            if (!MyUser::checklogin()) {
+                header('WWW-Authenticate: Basic realm="MediaServer"');
+                header('HTTP/1.0 401 Unauthorized');
+                exit(0);
+            }
+        }
+
         switch ($path) {
             case "/":
                 PageEngine::html("admin/page_index");

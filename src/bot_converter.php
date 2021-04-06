@@ -52,14 +52,23 @@ while(true) {
         }
     }
 
+    $filesjson = array("bucket" => array());
+
     foreach ($org_video_files as $file) {
         if (!$file->is_video) { echo("[NOTICE] kein Video".PHP_EOL); continue; }
         $md5 = $file->md5;
         echo("[MD5] ".$md5.PHP_EOL);
+        preg_match ("@^/originals/(?P<bucket>[^/]+)/(?P<path>.*)$@", $file->fullpath,$m);
+        $bucket = $m["bucket"];
+        $restpath = $m["path"];
+        $filesjson["bucket"][$bucket][$restpath]["md5"] = $md5;
+        $filesjson["bucket"][$bucket][$restpath]["conv"] = array();
+        //$filesjson 
 
         if (($json["convert"]["default"]["jpg_thumbnail0"] ?? "") == 1) {
             $local = new Datei("/converted/".$md5.".0.jpg");
             if (!$local->exists) $file->ffmpegthumbnailmiddle($local);
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.thumbmiddle";
         }
 
         if (($json["convert"]["default"]["mp4_1080p"] ?? "") == 1) {
@@ -69,6 +78,7 @@ while(true) {
                 if ($file->height > 1080) $atts .= ' -filter:v "scale=-2:1080" ';
                 $file->convertffmpeg($local, $atts);
             }
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.mp41080p";
         }
 
         if (($json["convert"]["default"]["webm_1080p"] ?? "") == 1) {
@@ -78,6 +88,7 @@ while(true) {
                 if ($file->height > 1080) $atts .= ' -filter:v "scale=-2:1080" ';
                 $file->convertffmpeg($local, $atts);
             }
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.webm1080p";
         }
 
         if (($json["convert"]["default"]["mp4_480p"] ?? "") == 1) {
@@ -89,6 +100,7 @@ while(true) {
                 if ($file->height > 480) $atts .= ' -filter:v "scale=-2:480" ';
                 $file->convertffmpeg($local, $atts);
             }
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.mp4480p";
         }
 
         if (($json["convert"]["default"]["webm_480p"] ?? "") == 1) {
@@ -100,6 +112,7 @@ while(true) {
                 if ($file->height > 480) $atts .= ' -filter:v "scale=-2:480" ';
                 $file->convertffmpeg($local, $atts);
             }
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.webm480p";
         }
 
         if (($json["convert"]["default"]["mp4_240p"] ?? "") == 1) {
@@ -111,6 +124,7 @@ while(true) {
                 if ($file->height > 240) $atts .= ' -filter:v "scale=-2:240" ';
                 $file->convertffmpeg($local, $atts);
             }
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.mp4240p";
         }
 
         if (($json["convert"]["default"]["webm_240p"] ?? "") == 1) {
@@ -122,9 +136,13 @@ while(true) {
                 if ($file->height > 240) $atts .= ' -filter:v "scale=-2:240" ';
                 $file->convertffmpeg($local, $atts);
             }
+            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.webm240p";
         }
         
     }
+
+    file_put_contents("/config/files.json", json_encode($filesjson)); 
+    chmod("/config/files.json", 0777);
 
 
     echo("[WAIT] warte 60sec ".date("Y-m-d H:i:s"));

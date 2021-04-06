@@ -32,8 +32,19 @@
 
   //mkdir("/originals/demo/", 0777, true);
 
-  if (!file_exists($dir)) die("Ordner gibt es nicht");
-  if (!is_writable($dir)) die("Ordner nicht beschreibbar");
+  if (!file_exists($dir)) echo('<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  Diesen Ordner gibt es leider nicht!
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>');
+  elseif (!is_writable($dir)) echo('<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  Der Ordner ist nicht beschreibbar!
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>');
+  else {
 
 
   $files = scandir($dir);
@@ -52,6 +63,10 @@
     <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-folder-plus"></i> Create</button>
   </div>
 </div></form>
+
+<?php
+  }
+?>
 
 </table>
   </main>
