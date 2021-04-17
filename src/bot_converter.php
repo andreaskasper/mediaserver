@@ -29,13 +29,23 @@ spl_autoload_register(function($class_name) {
 	return false;
 });
 
+/*DB::init(0, "sqlite:/configs/db.sqlite3");
+
+$db = new DB(0);
+$db->cmd('CREATE TABLE IF NOT EXISTS files (
+    original_file TEXT PRIMARY KEY,
+    bucket TEXT,
+    pre TEXT,
+    md5 TEXT
+    )');*/
+
 if (!file_exists("/config/config.json")) { 
     file_put_contents("/config/config.json","{}"); 
     chmod("/config/config.json", 0777);
 }
 
 while(true) {
-    $json = @json_decode(@file_get_contents("/config/config.json"),true);
+    $json_config = @json_decode(@file_get_contents("/config/config.json"),true);
     print_r($json);
 
     $org_video_files = array();
@@ -65,102 +75,17 @@ while(true) {
         $filesjson["bucket"][$bucket][$restpath]["conv"] = array();
         //$filesjson 
 
-        if (($json["convert"]["default"]["jpg_thumbnail0"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".0.jpg");
-            if (!$local->exists) $file->ffmpegthumbnailmiddle($local);
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.thumbmiddle";
-        }
 
-        if (($json["convert"]["default"]["jpg_thumbnail1"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".1.jpg");
-            if (!$local->exists) {
-                $duration = $file->video_duration;
-                $folder = "/tmp/".md5(microtime(true))."/";
-                mkdir($folder, 0777);
-                passthru('nice -n 19 ffmpeg -i "'.$file->fullpath.'" -vf fps=1/'.($duration/25).' '.$folder.'%d.png');        
-                $im = ImageCreateTrueColor(1920, 1080);
-                for ($i = 1; $i <= 25; $i++) {
-                    $im2 = ImageCreateFromPng($folder.$i.".png");
-                    ImageCopyResized($im, $im2, ((($i-1) % 5)*1920/5), floor(($i-1)/5)*(1080/5), 0, 0, 1920/5, 1080/5, ImagesX($im2), ImagesY($im2));
-                    ImageDestroy($im2);
+        $converters = Converters::get_converters();
+        foreach ($converters as $conv_id => $convi) {
+            $datei_converted = new Datei("/converted/".$md5.$convi->get_suffix());
+            if (($json_config["convert"]["default"][$conv_id] ?? "") == 1) {
+                if (!$datei_converted->exists) {
+                    $a = $convi->convert($file, $datei_converted);
                 }
-                ImageJpeg($im, $local->fullpath, 100);
-                ImageDestroy($im);
-                exec('rm -f "'.$folder.'"');
             }
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.thumb25p";
+            if ($datei_converted->exists) $filesjson["bucket"][$bucket][$restpath]["conv"][] = $conv_id;
         }
-
-        
-
-        if (($json["convert"]["default"]["mp4_1080p"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".1080p.mp4");
-            if (!$local->exists) { 
-                $atts = " -c:v libx264 -c:a aac -movflags +faststart ";
-                if ($file->height > 1080) $atts .= ' -filter:v "scale=-2:1080" ';
-                $file->convertffmpeg($local, $atts);
-            }
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.mp41080p";
-        }
-
-        if (($json["convert"]["default"]["webm_1080p"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".1080p.webm");
-            if (!$local->exists) { 
-                $atts = ' -vcodec libvpx-vp9 -acodec libvorbis ';
-                if ($file->height > 1080) $atts .= ' -filter:v "scale=-2:1080" ';
-                $file->convertffmpeg($local, $atts);
-            }
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.webm1080p";
-        }
-
-        if (($json["convert"]["default"]["mp4_480p"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".480p.mp4");
-            if (!$local->exists) { 
-                $atts = " -c:v libx264 -c:a aac -movflags +faststart ";
-                if ($file->video_fps > 30) $atts .= " -r 30 ";
-                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
-                if ($file->height > 480) $atts .= ' -filter:v "scale=-2:480" ';
-                $file->convertffmpeg($local, $atts);
-            }
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.mp4480p";
-        }
-
-        if (($json["convert"]["default"]["webm_480p"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".480p.webm");
-            if (!$local->exists) {
-                $atts = ' -vcodec libvpx-vp9 -acodec libvorbis ';
-                if ($file->video_fps > 30) $atts .= " -r 30 ";
-                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
-                if ($file->height > 480) $atts .= ' -filter:v "scale=-2:480" ';
-                $file->convertffmpeg($local, $atts);
-            }
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.webm480p";
-        }
-
-        if (($json["convert"]["default"]["mp4_240p"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".240p.mp4");
-            if (!$local->exists) { 
-                $atts = " -c:v libx264 -c:a aac -movflags +faststart ";
-                if ($file->video_fps > 30) $atts .= " -r 30 ";
-                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
-                if ($file->height > 240) $atts .= ' -filter:v "scale=-2:240" ';
-                $file->convertffmpeg($local, $atts);
-            }
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.mp4240p";
-        }
-
-        if (($json["convert"]["default"]["webm_240p"] ?? "") == 1) {
-            $local = new Datei("/converted/".$md5.".240p.webm");
-            if (!$local->exists) { 
-                $atts = ' -vcodec libvpx-vp9 -acodec libvorbis ';
-                if ($file->video_fps > 30) $atts .= " -r 30 ";
-                elseif ($file->video_fps > 25) $atts .= " -r 25 ";
-                if ($file->height > 240) $atts .= ' -filter:v "scale=-2:240" ';
-                $file->convertffmpeg($local, $atts);
-            }
-            $filesjson["bucket"][$bucket][$restpath]["conv"][] = "d.webm240p";
-        }
-        
     }
 
     file_put_contents("/config/files.json", json_encode($filesjson)); 

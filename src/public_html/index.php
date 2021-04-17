@@ -64,6 +64,9 @@ spl_autoload_register(function($class_name) {
 	if (isset($_GET["debug"])) throw new Exception("Klasse ".$class_name." kann nicht gefunden werden!");
 	return false;
 });
+
+DB::init(0, "sqlite:/configs/db.sqlite3");
+
 //require_once(__DIR__."/app/code/vendor/autoload.php");
 
 

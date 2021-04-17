@@ -12,11 +12,23 @@
     exit;
   }
 
+  if (($_GET["act"] ?? "") == "uploadDropzone") {
+    if (!is_writable("/originals/")) { die(json_encode(array("err" => 1, "msg" => "Ordner Originals nicht beschreibbar."))); }
+    foreach ($_FILES as $file) {
+      if (file_exists("/originals/demo/".$file["name"])) continue;
+      //if (!is_writable("/var/www/originals/".$file["name"])) { die(json_encode(array("err" => 2, "msg" => "Datei in Originals nicht beschreibbar."))); }
+      copy($file["tmp_name"], "/originals/demo/".$file["name"]);
+      echo("done");
+    }
+      die(json_encode(array("err" => 0, "msg" => "Ok")));
+    exit;
+  }
+
   $jsonfiles = @json_decode(@file_get_contents("/config/files.json"), true);
 
     PageEngine::html("header");
 ?>
-  <main id="dropzone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"ondrop="dropHandler(event);" ondragover="dragOverHandler(event);" style="min-height: 100vh">
+  <main id="dropzone" class="dropzone" style="min-height: 100vh">
 
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><i class="fas fa-database"></i><?=$params["bucket"] ?> <?=$params["path"] ?>
@@ -38,7 +50,8 @@ if (!is_writable("/originals/".$params["bucket"].$params["path"])) echo('<i clas
         </div>
       </div>
 
-      <table class="table table-striped">
+
+      <div id="table01o"><table id="table01" class="table table-striped">
       
 <?php
   $path2 = "/originals/".$params["bucket"].$params["path"];
@@ -138,7 +151,7 @@ else {
 }
   ?>
       
-      </table>
+      </table></div>
 
       <?php
 print_r($jsonfiles);
@@ -148,71 +161,23 @@ print_r($jsonfiles);
         <div id="uploadProgress2" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
       </div>
 
+      <div id="previews" class="dropzone-previews"></div>
+      <button id="clickable">Click me to select files</button>
+
   </main>
+<link rel="stylesheet" href="/skins/default/libs/dropzone/min/dropzone.min.css" />
+<script src="/skins/default/libs/dropzone/min/dropzone.min.js"></script>
 <script>
-function dragOverHandler(ev) {
-  //console.log('File(s) in drop zone');
-
-  // Prevent default behavior (Prevent file from being opened)
-  ev.preventDefault();
-}
-
-function dropHandler(ev) {
-  console.log('File(s) dropped');
-
-  // Prevent default behavior (Prevent file from being opened)
-  ev.preventDefault();
-
-  if (ev.dataTransfer.items) {
-    // Use DataTransferItemList interface to access the file(s)
-    fd = new FormData()
-    for (var i = 0; i < ev.dataTransfer.items.length; i++) {
-
-      $.each(ev.dataTransfer.files,function(i,v) {
-            fd.append("file",v,v.name)
-      });
-      // If dropped items aren't files, reject them
-      /*if (ev.dataTransfer.items[i].kind === 'file') {
-        var file = ev.dataTransfer.items[i].getAsFile();
-        console.log('... file[' + i + '].name = ' + file.name);
-      }*/
-      fd.append("url","drop")
-      upload(fd)
-    }
-  } else {
-    // Use DataTransfer interface to access the file(s)
-    for (var i = 0; i < ev.dataTransfer.files.length; i++) {
-      console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
-    }
-  }
-}
-
-function upload(fd){
-  $(window).bind('beforeunload', function(){
-    return "You're currently uploading. Do you want to exit this page?";
+  var myDropzone = new Dropzone(document.body, { // Make the whole body a dropzone
+    url: "?act=uploadDropzone", // Set the url
+    previewsContainer: "#previews", // Define the container to display the previews
+    clickable: "#clickable" // Define the element that should be used as click trigger to select files.
   });
-    return $.ajax({
-        xhr: function() {
-          var xhr = new window.XMLHttpRequest();
-          xhr.upload.addEventListener("progress", function(evt) {
-            if (evt.lengthComputable) {
-              var percentComplete = (evt.loaded / evt.total) * 100;
-              console.log("progress", percentComplete);
-              $("#uploadProgress2").css("width",percentComplete+"%").text(percentComplete.toFixed(1)+"%");
-              //Do something with upload progress here
-              }
-            }, false);
-          return xhr;
-        },
-        url:"?act=uploadDD",
-        type:"POST",
-        processData:false,
-        contentType: false,
-        data: fd,
-        success:function(){ console.log("Uploaded.",arguments); document.location.href=document.location.href; },
-        error:function(){ console.log("Error Uploading.",arguments) },
-    });
-}
+
+  myDropzone.on("complete", function(file) {
+    $("#table01o").load(location.href + " #table01");
+    /* Maybe display some more file information on your page */
+  });
 </script>
 <?php
     PageEngine::html("footer");

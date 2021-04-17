@@ -1,6 +1,9 @@
 <?php
 
-    $default_converters = array(
+
+  $default_converters = Converters::get_converters();
+
+/*    $default_converters = array(
       "jpg_thumbnail0" => "Thumbnail (middle)",
       "jpg_thumbnail1" => "Thumbnail (25 Previews)",
       "mp4_1080p" => "1080p mp4 (h264/aac)",
@@ -9,9 +12,15 @@
       "webm_1080p" => "1080p webm (VP9 Vorbis)",
       "webm_480p" => "480p webm (VP9 Vorbis)",
       "webm_240p" => "240p webm (VP9 Vorbis)",
+      "4Q_mp4_1080p" => "4 Quadrants Video split into 1080p mp4 (h264/aac)",
+      "4Q_mp4_480p" => "4 Quadrants Video split into 480p mp4 (h264/aac)",
+      "4Q_mp4_240p" => "4 Quadrants Video split into 240p mp4 (h264/aac)",
+      "4Q_webm_1080p" => "4 Quadrants Video split into 1080p webm (VP9 Vorbis)",
+      "4Q_webm_480p" => "4 Quadrants Video split into 480p webm (VP9 Vorbis)",
+      "4Q_webm_240p" => "4 Quadrants Video split into 240p webm (VP9 Vorbis)",
       "torrent0" => "Torrent for download",
       "embedd01" => "Embeddable Videocontainer (Standard)"
-    );
+    );*/
 
     if (($_POST["act"] ?? "") == "save") {
       $json = @json_decode(@file_get_contents("/config/config.json"),true);
@@ -61,7 +70,7 @@
 foreach ($default_converters as $k => $v) {
   echo('<tr>
   <td><INPUT type="checkbox" class="form-control" name="conv_'.$k.'" '.((($json["convert"]["default"][$k] ?? false) == true)?'CHECKED="CHECKED"':'').' value="1"/></td>
-  <td>'.$v.'</td>
+  <td>'.$v->get_name().'</td>
 </tr>');
 }
 ?>
