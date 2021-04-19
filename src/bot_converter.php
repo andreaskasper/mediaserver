@@ -46,7 +46,6 @@ if (!file_exists("/config/config.json")) {
 
 while(true) {
     $json_config = @json_decode(@file_get_contents("/config/config.json"),true);
-    print_r($json);
 
     $org_video_files = array();
     $dirs = array("/");
@@ -79,7 +78,11 @@ while(true) {
         $converters = Converters::get_converters();
         foreach ($converters as $conv_id => $convi) {
             $datei_converted = new Datei("/converted/".$md5.$convi->get_suffix());
-            if (($json_config["convert"]["default"][$conv_id] ?? "") == 1) {
+            if (
+                (($json_config["buckets"][$bucket]["conv"][$conv_id] ?? "") == 1)
+                OR
+                ((($json_config["buckets"][$bucket]["conv"][$conv_id] ?? 0) == 0) AND (($json_config["convert"]["default"][$conv_id] ?? "") == 1))
+                ) {
                 if (!$datei_converted->exists) {
                     $a = $convi->convert($file, $datei_converted);
                 }

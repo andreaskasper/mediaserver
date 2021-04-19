@@ -1,5 +1,8 @@
 <?php
 
+  $default_converters = Converters::get_converters();
+  $bucket = new Bucket("slug", $params["bucket"]);
+
   if (($_GET["act"] ?? "") == "uploadDD") {
     if (!is_writable("/originals/")) { die(json_encode(array("err" => 1, "msg" => "Ordner Originals nicht beschreibbar."))); }
     foreach ($_FILES as $file) {
@@ -24,7 +27,24 @@
     exit;
   }
 
+  if (($_POST["act"] ?? "") == "saveconfig") {
+    $json = @json_decode(@file_get_contents("/config/config.json"),true);
+    if (!is_array($json)) $json = array();
+
+    $i = -1;
+    foreach ($default_converters as $k => $v) {
+      $i++;
+      $json["buckets"][$params["bucket"]]["conv"][$k] = trim($_POST["convert_".$i] ?? 0);
+    }
+
+    $json["buckets"][$params["bucket"]]["dlperm"] = trim($_POST["dlperm"] ?? "private");
+
+    file_put_contents("/config/config.json", json_encode($json));
+  }
+
+
   $jsonfiles = @json_decode(@file_get_contents("/config/files.json"), true);
+  $json_config = @json_decode(@file_get_contents("/config/config.json"),true);
 
     PageEngine::html("header");
 ?>
@@ -40,13 +60,13 @@ if (!is_writable("/originals/".$params["bucket"].$params["path"])) echo('<i clas
         </h1>
         <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group mr-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            <button type="button" id="clickable" class="btn btn-sm btn-outline-secondary"><i class="fad fa-folder-upload mr-1"></i>Upload</button>
+            <!--<button type="button" class="btn btn-sm btn-outline-secondary">Export</button>-->
           </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+          <!--<button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             This week
-          </button>
+          </button>-->
         </div>
       </div>
 
@@ -83,11 +103,15 @@ else {
     echo('<tr><td>');
     switch ($datei->extension) {
       case "jpg":
+      case "jpeg":
       case "png":
         echo('<i class="far fa-image"></i>'); break;
       case "mp4":
       case "webm":
         echo('<i class="far fa-film"></i>'); break;
+      case "rar":
+      case "zip":
+        echo('<i class="far fa-file-archive"></i>'); break;
       default: echo($datei->extension); break;
     }
     if ($datei->is_video) {
@@ -154,7 +178,8 @@ else {
       </table></div>
 
       <?php
-print_r($jsonfiles);
+//print_r($jsonfiles);
+//echo('<pre>'.json_encode($json_config,JSON_PRETTY_PRINT).'</pre>');
       ?>
 
       <div class="progress">
@@ -162,7 +187,65 @@ print_r($jsonfiles);
       </div>
 
       <div id="previews" class="dropzone-previews"></div>
-      <button id="clickable">Click me to select files</button>
+
+<?php
+      if ($params["path"] == "/") {
+  echo('<form method="POST"><INPUT type="hidden" name="act" value="saveconfig"/>');
+  echo('<div class="row my-2">');
+  echo('<div class="col">');
+  echo('<h3><i class="fad fa-conveyor-belt-alt"></i> Bucket Converters</h3>');
+  echo('<table class="table table-striped">
+  <thead><tr>
+        <th></th>
+        <th>default</th>
+        <th class="text-center">disabled</th>
+        <th class="text-center">default</th>
+        <th class="text-center">enabled</th>
+        <th>this</th>
+  </tr></thead>
+  <tbody>
+  ');
+  $i = -1;
+  foreach ($default_converters as $k => $v) {
+    $i++;
+    echo('<tr>
+    <td>'.$v->get_name().'</td>
+    <td>');
+    if (($json_config["convert"]["default"][$k] ?? false) == true) echo('<span style="color: #080;">enabled</span>'); else echo('<span style="color: #f00">disabled</span>');
+    $sel = $json_config["buckets"][$params["bucket"]]["conv"][$k] ?? 0;
+    echo('</td>');
+    echo('<td><INPUT class="form-control" type="radio" name="convert_'.$i.'" '.(($sel == -1)?'CHECKED="CHECKED"':'').' value="-1"/></td>');
+    echo('<td><INPUT class="form-control" type="radio" name="convert_'.$i.'" '.(($sel ==  0)?'CHECKED="CHECKED"':'').' value="0" /></td>');
+    echo('<td><INPUT class="form-control" type="radio" name="convert_'.$i.'" '.(($sel ==  1)?'CHECKED="CHECKED"':'').' value="1" /></td>');
+    echo('<td>');
+    switch ($sel) {
+      case 1: echo('<span style="color: #080;">enabled</span>'); break;
+      case -1: echo('<span style="color: #f00;">disabled</span>'); break;
+      case 0:
+        if (($json_config["convert"]["default"][$k] ?? false) == true) echo('<span style="color: #080;">enabled</span>'); else echo('<span style="color: #f00">disabled</span>');
+    }
+    echo('</td>');
+    echo('</tr>');
+  }
+  echo('</tbody></table>');
+  echo('<BUTTON class="btn btn-primary" type="submit">save</button>');
+  echo('</div>');
+  echo('<div class="col">');
+  echo('<h3><i class="fad fa-user"></i> Bucket Users</h3>');
+  echo('<div><INPUT type="checkbox" CHECKED="CHECKED" onclick="return false;"/> Superadmin</div>');
+  echo('</div>');
+  echo('<div class="col">');
+  echo('<h3><i class="fad fa-key"></i> Bucket Permissions</h3>');
+  $sel = $json_config["buckets"][$params["bucket"]]["dlperm"] ?? "private";
+  echo('<div><label><INPUT type="radio" name="dlperm" value="private" '.(($sel == "private")?'CHECKED="CHECKED"':'').'/> Private</label></div>');
+  echo('<div><label><INPUT type="radio" name="dlperm" value="public" '.(($sel == "public")?'CHECKED="CHECKED"':'').'/> Public</label></div>');
+  echo('<div><label><INPUT type="radio" name="dlperm" value="token" '.(($sel == "token")?'CHECKED="CHECKED"':'').'/> Token Salt:</label><INPUT class="form-control" type="text" name="dlperm_salt" PLACEHOLDER="salt"/></div>');
+  echo('</div>');
+  echo('</div>');
+  echo('</form>');
+}
+?>
+
 
   </main>
 <link rel="stylesheet" href="/skins/default/libs/dropzone/min/dropzone.min.css" />

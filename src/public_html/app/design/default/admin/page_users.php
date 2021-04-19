@@ -1,10 +1,14 @@
 <?php
+
+    $json_config = @json_decode(@file_get_contents("/config/config.json"),true);
+
+
     PageEngine::html("header");
 ?>
   <main id="dropzone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
 
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><i class="fas fa-database"></i> Buckets</h1>
+        <h1 class="h2"><i class="fas fa-database"></i> Users</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group mr-2">
             <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
@@ -18,16 +22,21 @@
       </div>
 
       <table class="table table-striped">
-  <?php
-  $dir = "/originals/";
-  $files = scandir($dir);
-  foreach ($files as $file) {
-    if (substr($file,0,1) == ".") continue;
-    if (!is_dir($dir.$file)) continue;
-    echo('<tr><td><a href="/'.$_ENV["lang"].'/admin/bucket/'.$file.'/"><i class="far fa-folder"></i> '.$file.'</a></td></tr>');
-  }
+<?php
+      foreach (($json_config["users"] ?? array()) as $row) {
+        echo('<tr>');
+        echo('<td><i class="fas fa-user" style="font-size:1.5rem"></i></td>');
+        echo('<td>'.($row["id"] ?? "").'</td>');
+        echo('<td><INPUT type="password" class="form-control"/></td>');
+        echo('</tr>');
+      }
+  echo('<tr>');
+  echo('<td><i class="fas fa-user-plus" style="font-size:1.5rem"></i></td>');
+  echo('<td><INPUT type="text" class="form-control"/></td>');
+  echo('<td><INPUT type="password" class="form-control"/></td>');
+  echo('</tr>');
 ?>
-</table>
+      </table>
   </main>
 <?php
     PageEngine::html("footer");
